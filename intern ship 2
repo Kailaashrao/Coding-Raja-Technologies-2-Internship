@@ -1,0 +1,95 @@
+import csv
+import datetime
+
+def get_expense_details():
+    name = input("Enter expense name: ")
+    amount = float(input("Enter expense amount: "))
+    categories = ["Food", "Transport", "Utilities", "Entertainment", "Other"]
+    print("Select category:")
+    for i, category in enumerate(categories, start=1):
+        print(f"{i}. {category}")
+    category_index = int(input("Enter category number: ")) - 1
+    category = categories[category_index]
+    return {'name': name, 'amount': amount, 'category': category}
+
+def add_expense(expenses):
+    expense = get_expense_details()
+    expenses.append(expense)
+
+def save_to_csv(expenses, filename):
+    with open(filename, 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["Name", "Amount", "Category"])
+        for expense in expenses:
+            writer.writerow([expense['name'], expense['amount'], expense['category']])
+
+def load_from_csv(filename):
+    expenses = []
+    with open(filename, 'r') as file:
+        reader = csv.reader(file)
+        next(reader)  # Skip header
+        for row in reader:
+            expenses.append({'name': row[0], 'amount': float(row[1]), 'category': row[2]})
+    return expenses
+
+def summarize_expenses_by_category(expenses):
+    summary = {}
+    for expense in expenses:
+        category = expense['category']
+        if category in summary:
+            summary[category] += expense['amount']
+        else:
+            summary[category] = expense['amount']
+    return summary
+
+def remaining_budget(expenses, budget):
+    total_expenses = sum(expense['amount'] for expense in expenses)
+    return budget - total_expenses
+
+def daily_spending_limit(remaining_budget):
+    today = datetime.datetime.today()
+    days_left = (datetime.datetime(today.year, today.month + 1, 1) - today).days
+    return remaining_budget / days_left if days_left > 0 else None
+
+def main():
+    budget = float(input("Enter your monthly budget: "))
+    expenses = []
+    
+    while True:
+        print("\n1. Add expense")
+        print("2. Save expenses to CSV")
+        print("3. Load expenses from CSV")
+        print("4. Summarize expenses by category")
+        print("5. Show remaining budget")
+        print("6. Show daily spending limit")
+        print("7. Exit")
+        
+        choice = input("Enter your choice: ")
+        
+        if choice == '1':
+            add_expense(expenses)
+        elif choice == '2':
+            filename = input("Enter filename to save to: ")
+            save_to_csv(expenses, filename)
+        elif choice == '3':
+            filename = input("Enter filename to load from: ")
+            expenses = load_from_csv(filename)
+        elif choice == '4':
+            summary = summarize_expenses_by_category(expenses)
+            for category, total in summary.items():
+                print(f"{category}: ${total:.2f}")
+        elif choice == '5':
+            print(f"Remaining budget: ${remaining_budget(expenses, budget):.2f}")
+        elif choice == '6':
+            daily_limit = daily_spending_limit(remaining_budget(expenses, budget))
+            if daily_limit is not None:
+                print(f"Daily spending limit: ${daily_limit:.2f}")
+            else:
+                print("No days left in the month.")
+        elif choice == '7':
+            break
+        else:
+            print("Invalid choice. Please try again.")
+
+if __name__ == "__main__":
+    main()
